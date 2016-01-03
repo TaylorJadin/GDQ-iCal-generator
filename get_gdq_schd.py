@@ -11,32 +11,41 @@
 
 from __future__ import with_statement
 import datetime as dt
+import hashlib
 import os
 import re
 import sys
 
-#== CONST =====================================================================#
+#== CONST/CONF ================================================================#
 
-CALENDAR_FILE='cal.ical.ics'
-CALENDAR_URL='https://gamesdonequick.com/schedule'
-CALENDAR_NAME='AGDQ 2016'
-TEMP_FILE='/tmp/temp_cal.html'
+# Whether all messages should be printed or not
+VERBOSE = True
 
-# TODO Get this somehow
-HOME='/home/gfm/'
-# TODO Auto increase in a cleaner way
-os.system('VERSION=0;'
-          'if [ -f ~/gdq_cal_version ];'
-              'then VERSION=`cat ~/gdq_cal_version`;'
-              'VERSION=$(($VERSION+1));'
-          'fi;'
-          'echo -n "$VERSION" > ~/gdq_cal_version')
-with open(HOME + '/gdq_cal_version') as fin:
-    UPDATE_VERSION=fin.readline()
+# Base directory
+BASE_DIR = '/media/data/ubuntu/github/GDQ-iCal-generator'
 
-td_re = re.compile(r'<td.*?>(.*?)</td>')
+# Generated iCal file
+CALENDAR_FILE = BASE_DIR + '/cal.ical.ics'
+# Calendar's name
+CALENDAR_NAME = 'AGDQ 2016'
+
+# Source of the calendar
+CALENDAR_URL = 'https://gamesdonequick.com/schedule'
+# The calendar is downloaded to this file
+TEMP_FILE = '/tmp/temp_cal.html'
+# Directory where data is stored between runs
+VAR_DIR = BASE_DIR + '/var'
+# File where the calendar's current version is stored
+VERSION_FILE = VAR_DIR + '/gdq_cal_version'
+# Hash of the previously downloaded calendar, to decided whether to update
+HASH_FILE = VAR_DIR + '/hash.sha512'
 
 #== HELPER FUNCTIONS ==========================================================#
+
+def print_verb(s):
+    global VERBOSE
+    if VERBOSE:
+        print s
 
 def skip_token(tk, f):
     line = f.readline()
@@ -46,14 +55,49 @@ def skip_token(tk, f):
 
 #== MAIN ======================================================================#
 
-# Download the schedule
+# Download the page
 # TODO Use urllib to get the job done!
 os.system("wget -q -O" + TEMP_FILE + " " + CALENDAR_URL)
 if not os.path.isfile(TEMP_FILE):
-    print "Failed to Download the calendar"
+    print_verb('Failed to Download the calendar! Exiting...')
     sys.exit(1)
+else:
+    print_verb('Schedule successfully downloaded into {:s}'.format(TEMP_FILE))
+
+# Calculate its SHA 512
+alg = hashlib.sha512()
+with open(TEMP_FILE, 'rt') as fin:
+    for line in fin:
+        alg.update(line)
+dgst = alg.digest()
+
+# Check if the SHA differs from the previously stored one
+str_hash = ''.join("{:02x}".format(ord(c)) for c in dgst)
+print_verb('Downloaded schedule\'s hash (SHA 512): {:s}'.format(str_hash))
+if os.path.isfile(HASH_FILE):
+    with open(HASH_FILE, 'rt') as fin:
+        prev_str_hash = fin.readline()
+        if str_hash == prev_str_hash:
+            print_verb('Schedule not updated! Exiting...')
+            sys.exit(0)
+        else:
+            print_verb('Got a new schedule! Updating...')
+else:
+    print_verb('No previous hash! Generating first calendar...')
+
+# Retrieve the current version and update it
+UPDATE_VERSION = 0
+if os.path.isfile(VERSION_FILE):
+    with open(VERSION_FILE, "rt") as fin:
+        UPDATE_VERSION = int(fin.readline())
+        UPDATE_VERSION += 1
+print_verb('Current calendar version: {:d}'.format(UPDATE_VERSION))
+
+# Compile the Regex to retrieve the content of a table's cell
+td_re = re.compile(r'<td.*?>(.*?)</td>')
 
 # Open both input and output files
+print_verb('Reading schedule and generating calendar...')
 with open(TEMP_FILE, "rt") as fin:
     with open(CALENDAR_FILE, "wt") as fout:
         # Write calendar's header
@@ -80,8 +124,10 @@ with open(TEMP_FILE, "rt") as fin:
             try:
                 content = td_re.match(line).group(1)
             except Exception as e:
-                print "line: '" + line + "'"
-                print e
+                print_verb('Failed to retrieve content from table cell!')
+                print_verb('line: \'{:s}\''.format(line))
+                print_verb(str(e))
+                print_verb('Exiting...')
                 sys.exit(1)
             if content == "Start Time":
                 i_start_time = i
@@ -98,7 +144,8 @@ with open(TEMP_FILE, "rt") as fin:
             elif content == "Description":
                 i_description = i
             else:
-                print "Unkown table header: '" + content + "'"
+                print_verb('Unkown table header: \'{:s}\''.format(content))
+                print_verb('Exiting...')
                 sys.exit(1)
             i += 1
             line = fin.readline()
@@ -124,8 +171,9 @@ with open(TEMP_FILE, "rt") as fin:
                     dt_delta = dt.datetime.strptime(ev['run time'], '%H:%M:%S')
                     dt_setup = dt.datetime.strptime(ev['setup time'], '%H:%M:%S')
                 except Exception as e:
-                    print "Got error on event: " + str(ev)
-                    print e
+                    print_verb('Got error on event: \'{:s}\''.format(str(ev)))
+                    print_verb(str(e))
+                    print_verb('Exiting...')
                     sys.exit(1)
 
                 dt_end = dt_start + dt.timedelta(hours=dt_delta.hour, minutes=dt_delta.minute, seconds=dt_delta.second)
@@ -191,11 +239,24 @@ with open(TEMP_FILE, "rt") as fin:
                 elif i == i_description:
                     ev['desc'] = content
                 else:
-                    print "Something strange happened on line '" + line + "'"
+                    print_verb('Something strange happened on line \'{:s}\''.format(line))
                 i += 1
             line = fin.readline()
         fout.write('END:VCALENDAR\n');
 
+print_verb('iCal generated successfully!')
+
 # Delete the temporary file
+print_verb('Removing downloaded file...')
 os.remove(TEMP_FILE)
+
+# Write the hash now that the calendar was generated
+print_verb('Storing hash of the downloaded file...')
+with open(HASH_FILE, 'wt') as fout:
+    fout.write(str_hash)
+
+# Update the calendar version
+print_verb('Storing version of the current calendar')
+with open(VERSION_FILE, "wt") as fout:
+    fout.write('{:d}'.format(UPDATE_VERSION))
 

@@ -1,0 +1,6 @@
+
+# Ignore generated calendar
+cal.ical.ics
+# Ignore persistent data
+var/*
+
