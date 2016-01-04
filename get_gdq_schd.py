@@ -96,6 +96,9 @@ print_verb('Current calendar version: {:d}'.format(UPDATE_VERSION))
 # Compile the Regex to retrieve the content of a table's cell
 td_re = re.compile(r'<td.*?>(.*?)</td>')
 
+# Current time in UTC
+dt_now = dt.datetime.utcnow()
+
 # Open both input and output files
 print_verb('Reading schedule and generating calendar...')
 with open(TEMP_FILE, "rt") as fin:
@@ -203,7 +206,14 @@ with open(TEMP_FILE, "rt") as fin:
                 if 'cat' in ev and len(ev['cat']) > 0:
                     Description += 'Category: {}\\n'.format(ev['cat'])
                 if 'run time' in ev and len(ev['run time']) > 0:
-                    Description += 'Estimate: {:02d}:{:02d}:{:02d}\\n'.format(dt_delta.hour, dt_delta.minute, dt_delta.second)
+                    if dt_start >= dt_now:
+                        Description += 'Estimate: {:02d}:{:02d}:{:02d}\\n'.format(dt_delta.hour,
+                                                                                  dt_delta.minute,
+                                                                                  dt_delta.second)
+                    else:
+                        Description += 'Run time: {:02d}:{:02d}:{:02d}\\n'.format(dt_delta.hour,
+                                                                                  dt_delta.minute,
+                                                                                  dt_delta.second)
                 if 'setup time' in ev and len(ev['setup time']) > 0:
                     Description += 'Setup: {:02d}:{:02d}:{:02d}\\n'.format(dt_setup.hour, dt_setup.minute, dt_setup.second)
                 if 'desc' in ev and len(ev['desc']) > 0:
@@ -259,4 +269,6 @@ with open(HASH_FILE, 'wt') as fout:
 print_verb('Storing version of the current calendar')
 with open(VERSION_FILE, "wt") as fout:
     fout.write('{:d}'.format(UPDATE_VERSION))
+
+os.system('notify-send -u LOW -t 1500 "{:s} calendar updated"'.format(CALENDAR_NAME))
 
