@@ -206,7 +206,7 @@ with open(TEMP_FILE, "rt") as fin:
                 if 'cat' in ev and len(ev['cat']) > 0:
                     Description += 'Category: {}\\n'.format(ev['cat'])
                 if 'run time' in ev and len(ev['run time']) > 0:
-                    if dt_start >= dt_now:
+                    if dt_end >= dt_now:
                         Description += 'Estimate: {:02d}:{:02d}:{:02d}\\n'.format(dt_delta.hour,
                                                                                   dt_delta.minute,
                                                                                   dt_delta.second)
