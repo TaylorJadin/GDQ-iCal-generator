@@ -27,7 +27,7 @@ BASE_DIR = '/media/data/ubuntu/github/GDQ-iCal-generator'
 # Generated iCal file
 CALENDAR_FILE = BASE_DIR + '/cal.ical.ics'
 # Calendar's name
-CALENDAR_NAME = 'AGDQ 2016'
+CALENDAR_NAME = 'SGDQ 2016'
 
 # Source of the calendar
 CALENDAR_URL = 'https://gamesdonequick.com/schedule'
@@ -95,6 +95,8 @@ print_verb('Current calendar version: {:d}'.format(UPDATE_VERSION))
 
 # Compile the Regex to retrieve the content of a table's cell
 td_re = re.compile(r'<td.*?>(.*?)</td>')
+# Compile the Regex to strip clock image from string
+i_re = re.compile(r' <i.*?></i> ([0-9:]*) ')
 
 # Current time in UTC
 dt_now = dt.datetime.utcnow()
@@ -120,37 +122,7 @@ with open(TEMP_FILE, "rt") as fin:
         # Skip a few tokens...
         skip_token("<thead>", fin)
         skip_token("<tr", fin)
-        # Retrieve the table structure
-        line = fin.readline()
-        i = 0
         while not line.find("</tr>") == 0:
-            try:
-                content = td_re.match(line).group(1)
-            except Exception as e:
-                print_verb('Failed to retrieve content from table cell!')
-                print_verb('line: \'{:s}\''.format(line))
-                print_verb(str(e))
-                print_verb('Exiting...')
-                sys.exit(1)
-            if content == "Start Time":
-                i_start_time = i
-            elif content == "Name":
-                i_name = i
-            elif content == "Runners":
-                i_runners = i
-            elif content == "Run Time":
-                i_run_time = i
-            elif content == "Category":
-                i_category = i
-            elif content == "Setup Time":
-                i_setup_time = i
-            elif content == "Description":
-                i_description = i
-            else:
-                print_verb('Unkown table header: \'{:s}\''.format(content))
-                print_verb('Exiting...')
-                sys.exit(1)
-            i += 1
             line = fin.readline()
         # Skip a few tokens...
         skip_token("</thead>", fin)
@@ -158,24 +130,46 @@ with open(TEMP_FILE, "rt") as fin:
         # Retrieve the table contents
         line = fin.readline()
         uid = 0
+        i = 0
+        ev = {}
+        # Attributes indexes (hard coded, since it can't be easily retrieved, anymore...)
+        i_start_time = 0
+        i_name = 1
+        i_runners = 2
+        i_setup_time = 3
+        i_run_time = 4
+        i_category = 5
         while not line.find("</tbody>") == 0:
-            if line.find("<tr") == 0:
-                i = 0
-                ev = {}
+            if line.find("</tr>") == 0 and i < i_category and \
+                    ev.has_key('name') and ev['name'].find('Finale!') != 0:
+                pass
+            elif line.find("<tr") == 0:
+                if i >= i_category:
+                    i = 0
+                    ev = {}
             elif line.find("</tr>") == 0:
-                if ev['name'].find("Finale!") == 0:
+                if ev['name'].find('Finale!') == 0 or \
+                        ev['name'].find('Pre-Show') == 0:
                     # Complete the final event so no exceptions are thrown
                     ev['run time'] = "00:00:00"
                     ev['setup time'] = "00:00:00"
 
                 # Retrieve the event time
                 try:
-                    dt_start = dt.datetime.strptime(ev['start'], '%Y-%m-%dT%H:%M:%SZ')
+                    if ev['start'].find('+') >= 0 :
+                        dt_start = dt.datetime.strptime(ev['start'], '%Y-%m-%dT%H:%M:%S+0000')
+                    elif ev['start'].find('Z') >= 0 :
+                        dt_start = dt.datetime.strptime(ev['start'], '%Y-%m-%dT%H:%M:%SZ')
+                    else:
+                        print_verb('Got error on event: \'{:s}\''.format(str(ev)))
+                        print_verb('Error: weird start time: "' + ev['start'] + '"')
+                        print_verb('Exiting...')
+                        sys.exit(1)
                     dt_delta = dt.datetime.strptime(ev['run time'], '%H:%M:%S')
                     dt_setup = dt.datetime.strptime(ev['setup time'], '%H:%M:%S')
                 except Exception as e:
                     print_verb('Got error on event: \'{:s}\''.format(str(ev)))
-                    print_verb(str(e))
+                    print_verb('Error: ' + str(e))
                     print_verb('Exiting...')
                     sys.exit(1)
 
@@ -240,14 +234,20 @@ with open(TEMP_FILE, "rt") as fin:
                     ev['name'] = content
                 elif i == i_runners:
                     ev['runners'] = content
+                elif i == i_setup_time:
+                    # Remove '<i...></i>'
+                    tmp = i_re.match(content)
+                    if tmp is not None:
+                        content = tmp.group(1)
+                    ev['setup time'] = content
                 elif i == i_run_time:
+                    # Remove '<i...></i>'
+                    tmp = i_re.match(content)
+                    if tmp is not None:
+                        content = tmp.group(1)
                     ev['run time'] = content
                 elif i == i_category:
                     ev['cat'] = content
-                elif i == i_setup_time:
-                    ev['setup time'] = content
-                elif i == i_description:
-                    ev['desc'] = content
                 else:
                     print_verb('Something strange happened on line \'{:s}\''.format(line))
                 i += 1
