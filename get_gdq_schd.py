@@ -27,7 +27,7 @@ BASE_DIR = '/media/data/ubuntu/github/GDQ-iCal-generator'
 # Generated iCal file
 CALENDAR_FILE = BASE_DIR + '/cal.ical.ics'
 # Calendar's name
-CALENDAR_NAME = 'SGDQ 2016'
+CALENDAR_NAME = 'AGDQ 2017'
 
 # Source of the calendar
 CALENDAR_URL = 'https://gamesdonequick.com/schedule'
@@ -217,7 +217,7 @@ with open(TEMP_FILE, "rt") as fin:
                 fout.write('BEGIN:VEVENT\n');
                 fout.write('DTSTART:{}\n'.format(StartDate));
                 fout.write('DTEND:{}\n'.format(EndDate));
-                fout.write('UID:AGDQ2016CALBYGFM{}\n'.format(uid));
+                fout.write('UID:AGDQ2017CALBYGFM{}\n'.format(uid));
                 fout.write('DESCRIPTION:{}\n'.format(Description));
                 fout.write('LOCATION:\n');
                 fout.write('SEQUENCE:{}\n'.format(UPDATE_VERSION))
