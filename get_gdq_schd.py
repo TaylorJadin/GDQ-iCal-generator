@@ -27,7 +27,7 @@ BASE_DIR = '/media/data/ubuntu/github/GDQ-iCal-generator'
 # Generated iCal file
 CALENDAR_FILE = BASE_DIR + '/cal.ical.ics'
 # Calendar's name
-CALENDAR_NAME = 'AGDQ 2017'
+CALENDAR_NAME = 'SGDQ 2017'
 
 # Source of the calendar
 CALENDAR_URL = 'https://gamesdonequick.com/schedule'
@@ -166,7 +166,10 @@ with open(TEMP_FILE, "rt") as fin:
                         print_verb('Exiting...')
                         sys.exit(1)
                     dt_delta = dt.datetime.strptime(ev['run time'], '%H:%M:%S')
-                    dt_setup = dt.datetime.strptime(ev['setup time'], '%H:%M:%S')
+                    if ev['setup time'] is not None and len(ev['setup time']) > 0:
+                        dt_setup = dt.datetime.strptime(ev['setup time'], '%H:%M:%S')
+                    else:
+                        dt_setup = dt_start
                 except Exception as e:
                     print_verb('Got error on event: \'{:s}\''.format(str(ev)))
                     print_verb('Error: ' + str(e))

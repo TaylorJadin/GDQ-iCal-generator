@@ -8,6 +8,8 @@
 
 [Awesome Games Done Quick (AGDQ) 2017](https://calendar.google.com/calendar/ical/i3ljn1vgdgj335uoh4uhe03nd4%40group.calendar.google.com/public/basic.ics)
 
+[Summer Games Done Quick (SGDQ) 2017](https://calendar.google.com/calendar/ical/79scsgto6vqo2bn5b3crlf63lo%40group.calendar.google.com/public/basic.ics)
+
 ## About
 
 From the [Games Done Quick](https://gamesdonequick.com/) website:
