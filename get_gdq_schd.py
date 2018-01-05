@@ -94,7 +94,7 @@ if os.path.isfile(VERSION_FILE):
 print_verb('Current calendar version: {:d}'.format(UPDATE_VERSION))
 
 # Compile the Regex to retrieve the content of a table's cell
-td_re = re.compile(r'<td.*?>(.*?)</td>')
+td_re = re.compile(r'.*?<td.*?>(.*?)</td>')
 # Compile the Regex to strip clock image from string
 i_re = re.compile(r' <i.*?></i> ([0-9:]*) ')
 
@@ -102,6 +102,7 @@ i_re = re.compile(r' <i.*?></i> ([0-9:]*) ')
 dt_now = dt.datetime.utcnow()
 
 # Open both input and output files
+failed = False
 print_verb('Reading schedule and generating calendar...')
 with open(TEMP_FILE, "rt") as fin:
     with open(CALENDAR_FILE, "wt") as fout:
@@ -129,9 +130,7 @@ with open(TEMP_FILE, "rt") as fin:
         skip_token("<tbody", fin)
         # Retrieve the table contents
         line = fin.readline()
-        uid = 0
         i = 0
-        ev = {}
         # Attributes indexes (hard coded, since it can't be easily retrieved, anymore...)
         i_start_time = 0
         i_name = 1
@@ -139,6 +138,25 @@ with open(TEMP_FILE, "rt") as fin:
         i_setup_time = 3
         i_run_time = 4
         i_category = 5
+        index_name_list = []
+        while i < 6:
+            if i == i_start_time:
+                index_name_list.append('start')
+            elif i == i_name:
+                index_name_list.append('name')
+            elif i == i_runners:
+                index_name_list.append('runners')
+            elif i == i_setup_time:
+                index_name_list.append('setup time')
+            elif i == i_run_time:
+                index_name_list.append('run time')
+            elif i == i_category:
+                index_name_list.append('cat')
+            i += 1
+        # Actually parse the table
+        uid = 0
+        i = 0
+        ev = {}
         while not line.find("</tbody>") == 0:
             if line.find("</tr>") == 0 and i < i_category and \
                     ev.has_key('name') and ev['name'].find('Finale!') != 0:
@@ -230,48 +248,60 @@ with open(TEMP_FILE, "rt") as fin:
                 fout.write('END:VEVENT\n');
                 uid += 1
             else:
-                content = td_re.match(line).group(1)
-                if i == i_start_time:
-                    ev['start'] = content
-                elif i == i_name:
-                    ev['name'] = content
-                elif i == i_runners:
-                    ev['runners'] = content
-                elif i == i_setup_time:
-                    # Remove '<i...></i>'
-                    tmp = i_re.match(content)
-                    if tmp is not None:
-                        content = tmp.group(1)
-                    ev['setup time'] = content
-                elif i == i_run_time:
-                    # Remove '<i...></i>'
-                    tmp = i_re.match(content)
-                    if tmp is not None:
-                        content = tmp.group(1)
-                    ev['run time'] = content
-                elif i == i_category:
-                    ev['cat'] = content
-                else:
-                    print_verb('Something strange happened on line \'{:s}\''.format(line))
-                i += 1
+                try:
+                    base_match = td_re.match(line)
+                    if base_match is None:
+                        print 'Failed to get any match on index "{}"'.format(index_name_list[i])
+                    content = base_match.group(1)
+                    if i == i_start_time:
+                        ev['start'] = content
+                    elif i == i_name:
+                        ev['name'] = content
+                    elif i == i_runners:
+                        ev['runners'] = content
+                    elif i == i_setup_time:
+                        # Remove '<i...></i>'
+                        tmp = i_re.match(content)
+                        if tmp is not None:
+                            content = tmp.group(1)
+                        ev['setup time'] = content
+                    elif i == i_run_time:
+                        # Remove '<i...></i>'
+                        tmp = i_re.match(content)
+                        if tmp is not None:
+                            content = tmp.group(1)
+                        ev['run time'] = content
+                    elif i == i_category:
+                        ev['cat'] = content
+                    else:
+                        print_verb('Something strange happened on line \'{:s}\''.format(line))
+                    i += 1
+                except Exception as e:
+                    print 'Failed when parsing line: "{}"'.format(line)
+                    print e
+                    failed = True
+                    break
             line = fin.readline()
         fout.write('END:VCALENDAR\n');
 
-print_verb('iCal generated successfully!')
+if failed:
+    print_verb('Failed to generate iCal...')
+else:
+    print_verb('iCal generated successfully!')
 
-# Delete the temporary file
-print_verb('Removing downloaded file...')
-os.remove(TEMP_FILE)
+    # Delete the temporary file
+    print_verb('Removing downloaded file...')
+    os.remove(TEMP_FILE)
 
-# Write the hash now that the calendar was generated
-print_verb('Storing hash of the downloaded file...')
-with open(HASH_FILE, 'wt') as fout:
-    fout.write(str_hash)
+    # Write the hash now that the calendar was generated
+    print_verb('Storing hash of the downloaded file...')
+    with open(HASH_FILE, 'wt') as fout:
+        fout.write(str_hash)
 
-# Update the calendar version
-print_verb('Storing version of the current calendar')
-with open(VERSION_FILE, "wt") as fout:
-    fout.write('{:d}'.format(UPDATE_VERSION))
+    # Update the calendar version
+    print_verb('Storing version of the current calendar')
+    with open(VERSION_FILE, "wt") as fout:
+        fout.write('{:d}'.format(UPDATE_VERSION))
 
-os.system('notify-send -u LOW -t 1500 "{:s} calendar updated"'.format(CALENDAR_NAME))
+    os.system('notify-send -u LOW -t 1500 "{:s} calendar updated"'.format(CALENDAR_NAME))
 
