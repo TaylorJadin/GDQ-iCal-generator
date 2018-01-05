@@ -97,6 +97,9 @@ print_verb('Current calendar version: {:d}'.format(UPDATE_VERSION))
 td_re = re.compile(r'.*?<td.*?>(.*?)</td>')
 # Compile the Regex to strip clock image from string
 i_re = re.compile(r' <i.*?></i> ([0-9:]*) ')
+# Compile Regexes to match init and end of table row
+begin_tr_re = re.compile(r'.*?<tr')
+end_tr_re = re.compile(r'.*?</tr>')
 
 # Current time in UTC
 dt_now = dt.datetime.utcnow()
@@ -158,14 +161,14 @@ with open(TEMP_FILE, "rt") as fin:
         i = 0
         ev = {}
         while not line.find("</tbody>") == 0:
-            if line.find("</tr>") == 0 and i < i_category and \
+            if end_tr_re.match(line) is not None and i < i_category and \
                     ev.has_key('name') and ev['name'].find('Finale!') != 0:
                 pass
-            elif line.find("<tr") == 0:
+            elif begin_tr_re.match(line) is not None:
                 if i >= i_category:
                     i = 0
                     ev = {}
-            elif line.find("</tr>") == 0:
+            elif end_tr_re.match(line) is not None:
                 if ev['name'].find('Finale!') == 0 or \
                         ev['name'].find('Pre-Show') == 0:
                     # Complete the final event so no exceptions are thrown
