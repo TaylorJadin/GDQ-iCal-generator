@@ -141,8 +141,9 @@ with open(TEMP_FILE, "rt") as fin:
         i_setup_time = 3
         i_run_time = 4
         i_category = 5
+        i_reader = 6
         index_name_list = []
-        while i < 6:
+        while i < 7:
             if i == i_start_time:
                 index_name_list.append('start')
             elif i == i_name:
@@ -155,6 +156,8 @@ with open(TEMP_FILE, "rt") as fin:
                 index_name_list.append('run time')
             elif i == i_category:
                 index_name_list.append('cat')
+            elif i == i_reader:
+                index_name_list.append('reader')
             i += 1
         # Actually parse the table
         uid = 0
@@ -236,6 +239,8 @@ with open(TEMP_FILE, "rt") as fin:
                     Description += 'Setup: {:02d}:{:02d}:{:02d}\\n'.format(dt_setup.hour, dt_setup.minute, dt_setup.second)
                 if 'desc' in ev and len(ev['desc']) > 0:
                     Description += 'Others: {}'.format(ev['desc'])
+                if 'reader' in ev and len(ev['reader']) > 0:
+                    Description += 'Mic person: {}'.format(ev['reader'])
 
                 # Output it all to the csv
                 fout.write('BEGIN:VEVENT\n');
@@ -276,6 +281,12 @@ with open(TEMP_FILE, "rt") as fin:
                         ev['run time'] = content
                     elif i == i_category:
                         ev['cat'] = content
+                    elif i == i_reader:
+                        # Remove '<i...></i>'
+                        tmp = i_re.match(content)
+                        if tmp is not None:
+                            content = tmp.group(1)
+                        ev['reader'] = content
                     else:
                         print_verb('Something strange happened on line \'{:s}\''.format(line))
                     i += 1
