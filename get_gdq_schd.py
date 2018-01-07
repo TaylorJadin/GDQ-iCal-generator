@@ -95,8 +95,10 @@ print_verb('Current calendar version: {:d}'.format(UPDATE_VERSION))
 
 # Compile the Regex to retrieve the content of a table's cell
 td_re = re.compile(r'.*?<td.*?>(.*?)</td>')
-# Compile the Regex to strip clock image from string
+# Compile the Regex to strip clock image from a string
 i_re = re.compile(r' <i.*?></i> ([0-9:]*) ')
+# Compile the Regex to strip the reader from a string
+mic_re = re.compile(r'.*?<i.*?></i> ([a-zA-Z0-9_]*)')
 # Compile Regexes to match init and end of table row
 begin_tr_re = re.compile(r'.*?<tr')
 end_tr_re = re.compile(r'.*?</tr>')
@@ -283,7 +285,7 @@ with open(TEMP_FILE, "rt") as fin:
                         ev['cat'] = content
                     elif i == i_reader:
                         # Remove '<i...></i>'
-                        tmp = i_re.match(content)
+                        tmp = mic_re.match(content)
                         if tmp is not None:
                             content = tmp.group(1)
                         ev['reader'] = content
