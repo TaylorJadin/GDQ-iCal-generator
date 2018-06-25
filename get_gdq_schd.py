@@ -27,7 +27,7 @@ BASE_DIR = '/media/data/ubuntu/github/GDQ-iCal-generator'
 # Generated iCal file
 CALENDAR_FILE = BASE_DIR + '/cal.ical.ics'
 # Calendar's name
-CALENDAR_NAME = 'SGDQ 2017'
+CALENDAR_NAME = 'SGDQ 2018'
 
 # Source of the calendar
 CALENDAR_URL = 'https://gamesdonequick.com/schedule'
@@ -98,7 +98,7 @@ td_re = re.compile(r'.*?<td.*?>(.*?)</td>')
 # Compile the Regex to strip clock image from a string
 i_re = re.compile(r' <i.*?></i> ([0-9:]*) ')
 # Compile the Regex to strip the reader from a string
-mic_re = re.compile(r'.*?<i.*?></i> ([a-zA-Z0-9_]*)')
+mic_re = re.compile(r'.*?<i.*?></i> ([a-zA-Z0-9_\ ]*)')
 # Compile Regexes to match init and end of table row
 begin_tr_re = re.compile(r'.*?<tr')
 end_tr_re = re.compile(r'.*?</tr>')

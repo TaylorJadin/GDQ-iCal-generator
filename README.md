@@ -12,6 +12,8 @@
 
 [Awesome Games Done Quick (AGDQ) 2018](https://calendar.google.com/calendar/ical/i746pclvh45csu1u3ms4hgmgj4%40group.calendar.google.com/public/basic.ics)
 
+[Summer Games Done Quick (SGDQ) 2018](https://calendar.google.com/calendar/ical/jehdqctmgodgq69thth3t1d8cc%40group.calendar.google.com/public/basic.ics)
+
 ## About
 
 From the [Games Done Quick](https://gamesdonequick.com/) website:
