@@ -22,14 +22,14 @@ import sys
 VERBOSE = True
 
 # Base directory
-BASE_DIR = '/media/data/ubuntu/github/GDQ-iCal-generator'
+BASE_DIR = '/mnt/c/Users/jadin/Documents/Github/GDQ-iCal-generator'
 
 # Generated iCal file
 CALENDAR_FILE = BASE_DIR + '/cal.ical.ics'
 # Calendar's name
-CALENDAR_NAME = 'SGDQ 2018'
+CALENDAR_NAME = 'SGDQ 2021'
 # Base UID for events
-BASE_UID = 'SGDQ2018'
+BASE_UID = 'SGDQ2021'
 
 # Source of the calendar
 CALENDAR_URL = 'https://gamesdonequick.com/schedule'
