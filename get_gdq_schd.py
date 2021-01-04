@@ -22,7 +22,7 @@ import sys
 VERBOSE = True
 
 # Base directory
-BASE_DIR = '/mnt/c/Users/jadin/Documents/Github/GDQ-iCal-generator'
+BASE_DIR = '/mnt/c/Users/jadin/Documents/Github/GDQ-iCal-generator/'
 
 # Generated iCal file
 CALENDAR_FILE = BASE_DIR + '/cal.ical.ics'
