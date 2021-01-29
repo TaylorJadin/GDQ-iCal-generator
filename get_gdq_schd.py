@@ -47,12 +47,12 @@ HASH_FILE = VAR_DIR + '/hash.sha512'
 def print_verb(s):
     global VERBOSE
     if VERBOSE:
-        print s
+        print(s)
 
 def skip_token(tk, f):
     line = f.readline()
     if line.find(tk) != 0:
-        print line
+        print(line)
     assert line.find(tk) == 0
 
 #== MAIN ======================================================================#
@@ -263,7 +263,7 @@ with open(TEMP_FILE, "rt") as fin:
                 try:
                     base_match = td_re.match(line)
                     if base_match is None:
-                        print 'Failed to get any match on index "{}"'.format(index_name_list[i])
+                        print('Failed to get any match on index "{}"'.format(index_name_list[i]))
                     content = base_match.group(1)
                     if i == i_start_time:
                         ev['start'] = content
@@ -295,8 +295,8 @@ with open(TEMP_FILE, "rt") as fin:
                         print_verb('Something strange happened on line \'{:s}\''.format(line))
                     i += 1
                 except Exception as e:
-                    print 'Failed when parsing line: "{}"'.format(line)
-                    print e
+                    print('Failed when parsing line: "{}"'.format(line))
+                    print(e)
                     failed = True
                     break
             line = fin.readline()
